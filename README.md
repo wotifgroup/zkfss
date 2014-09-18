@@ -35,10 +35,10 @@ By default, feature switch values are read from nodes under "/zkfss/".  If you w
 another path, use the setFeatureSwitchNamespace method.  
 
 Values in feature switches nodes are expected to be boolean.  In fact, the system looks for the word "true" or "1" for 
-true and anything else is evaluated as false.
+true and "false" or "0" is evaluated as false.  A node is ignored if the value is not valid.
 
 Your feature switch names can be anything that matches a legal Zookeeper node name.  If the hostname subkey option is set, 
-the hostname is used as a sub-node to the feature switch name path.  A simnilar approach is used if an application name is
+the hostname is used as a sub-node to the feature switch name path.  A similar approach is used if an application name is
 set.
 
 Example using the default name space of "/zkfss/", a feature switch named "X":
@@ -46,9 +46,12 @@ Example using the default name space of "/zkfss/", a feature switch named "X":
 * The boolean value is stored at /zkfss/X.
 * If hostname subkey is set, and the hostname is "myHost", then an override value for the host is stored at "/zkfss/X/myHost".
 * If an application name is set, e.g. "myApp", then an override value for the application is stored at "/zkfss/X/myApp".
+* If hostname subkey is set, and the hostname is "myHost" and an application name is set, e.g. "myApp", then an override value 
+for the application is stored at "/zkfss/X/myApp/myHost" 
 
 Feature switch values are evaluated in the following order:
 
+* Host name node value override of an Application name node value
 * Application name node value override
 * Host name node value override
 * Feature Switch node value
@@ -57,7 +60,7 @@ Feature switch values are evaluated in the following order:
 Usage Examples
 --------------
 
-1. Using a default configuration.
+* Using a default configuration.
 
 ```java
 ZKFeatureSwitchService zkfss = new ZKFeatureSwitchService().start();
@@ -71,7 +74,7 @@ if (zkfss.isEnabled("myFeature")) {
 zkfss.stop()
 ```
 
-2. using configuration overrides
+* Using configuration overrides
 
 ```java
 ZKFeatureSwitchService zkfss = new ZKFeatureSwitchService()
@@ -85,6 +88,7 @@ ZKFeatureSwitchService zkfss = new ZKFeatureSwitchService()
 
 if (zkfss.isEnabled("myFeature")) {
   ...feature is enabled at either 
+    "/myNS/myFeature/myAppName/myHost", 
     "/myNS/myFeature/myAppName", 
     "/myNS/myFeature/myHost" or 
     "/myNS/myFeature" 

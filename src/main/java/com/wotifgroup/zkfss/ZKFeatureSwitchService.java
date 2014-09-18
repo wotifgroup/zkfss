@@ -4,13 +4,13 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.netflix.curator.RetryPolicy;
-import com.netflix.curator.framework.CuratorFramework;
-import com.netflix.curator.framework.CuratorFrameworkFactory;
-import com.netflix.curator.framework.recipes.cache.ChildData;
-import com.netflix.curator.framework.recipes.cache.NodeCache;
-import com.netflix.curator.framework.recipes.cache.NodeCacheListener;
-import com.netflix.curator.retry.ExponentialBackoffRetry;
+import org.apache.curator.RetryPolicy;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.cache.ChildData;
+import org.apache.curator.framework.recipes.cache.NodeCache;
+import org.apache.curator.framework.recipes.cache.NodeCacheListener;
+import org.apache.curator.retry.ExponentialBackoffRetry;
 
 /**
  * ZKFeatureSwitchService (zkfss) is a feature switch service implementation based on Apache Zookeeper (using Netflix Curator API).
@@ -248,6 +248,22 @@ public class ZKFeatureSwitchService implements FeatureSwitchService {
             throw new IllegalStateException("ZKFeatureSwitchService not running!");
         }
 
+        if (applicationName != null && useHostnameSubKey) {
+            String keyForApplicationName = featureSwitchNamespace + key + "/" + applicationName + "/" + hostname;
+
+            if (featureValues.containsKey(keyForApplicationName)) {
+                return featureValues.get(keyForApplicationName);
+            } else {
+                if (!nodeCaches.containsKey(keyForApplicationName)) {
+                    // create watch on node
+                    Boolean result = setupNodeWatch(keyForApplicationName);
+                    if (result != null) {
+                        return result;
+                    }
+                }
+            }
+        }
+
         if (applicationName != null) {
             String keyForApplicationName = featureSwitchNamespace + key + "/" + applicationName;
 
@@ -286,7 +302,10 @@ public class ZKFeatureSwitchService implements FeatureSwitchService {
         } else {
             if (!nodeCaches.containsKey(fsKey)) {
                 // create watch on node
-                return setupNodeWatch(fsKey);
+                Boolean result =  setupNodeWatch(fsKey);
+                if (result != null) {
+                    return result;
+                }
             }
         }
 
@@ -315,13 +334,17 @@ public class ZKFeatureSwitchService implements FeatureSwitchService {
     }
 
     private Boolean cacheCurrentValue(final String key, final NodeCache nc) {
-        Boolean value = null;
+        Boolean value = null;  // default if no correct data set
         ChildData currentData = nc.getCurrentData();
         if (currentData != null) {
             byte[] newDataValue = currentData.getData();
             if (newDataValue != null) {
                 String stringvalue = new String(newDataValue);
-                value = "true".equalsIgnoreCase(stringvalue) || "1".equals(stringvalue);
+                if ("true".equalsIgnoreCase(stringvalue) || "1".equals(stringvalue)) {
+                    value = true;
+                } else if ("false".equalsIgnoreCase(stringvalue) || "0".equals(stringvalue)) {
+                    value = false;
+                }
             }
         }
         if (value != null) {
