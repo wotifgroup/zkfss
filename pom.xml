@@ -9,6 +9,26 @@
 
 	<name>Zookeeper Feature Switch Service</name>
 
+    <inceptionYear>2014</inceptionYear>
+
+    <organization>
+        <name>The Wotif Group</name>
+        <url>http://www.wotifgroup.com</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git://github.com/wotifgroup/zkfss.git</connection>
+        <developerConnection>scm:git:git@github.com:wotifgroup/zkfss.git</developerConnection>
+        <url>http://github.com/wotifgroup/zkfss</url>
+    </scm>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -43,4 +63,30 @@
             <scope>test</scope>
         </dependency>
 	</dependencies>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>1.7</version>
+                <configuration>
+                    <addJavaLicenseAfterPackage>false</addJavaLicenseAfterPackage>
+                    <licenseName>apache_v2</licenseName>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>verify</id>
+                        <goals>
+                            <goal>check-file-header</goal>
+                        </goals>
+                        <phase>process-sources</phase>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
 </project>
